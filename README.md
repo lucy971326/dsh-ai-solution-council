@@ -43,43 +43,11 @@
 
 ## 安装
 
-### 从 npm 安装（推荐）
-
-npm 包已经包含构建产物，安装者不需要构建，也不需要修改 profile 的
-`pnpm-workspace.yaml`：
+使用 npm 安装：
 
 ```powershell
 dsh plugin --profile web add dsh-ai-solution-council
 ```
-
-### 从 GitHub 源码安装（开发用）
-
-```powershell
-dsh plugin --profile web add github:lucy971326/dsh-ai-solution-council
-```
-
-GitHub 依赖按源码包处理，会执行包的 `prepare` 构建脚本。pnpm 会要求在 profile 的
-`pnpm-workspace.yaml` 中显式允许本包构建：
-
-```yaml
-allowBuilds:
-  dsh-ai-solution-council: true
-```
-
-这是 pnpm 对 GitHub 源码依赖的安全授权，不是插件运行所需的配置。生产使用应优先使用 npm 包；开发时也可以固定 Git commit。
-
-### 从 tarball 安装
-
-适合本地验证已构建的独立包：
-
-```powershell
-pnpm install
-pnpm build
-pnpm pack
-dsh plugin --profile web add .\dsh-ai-solution-council-0.1.0.tgz
-```
-
-tarball 安装会把包放进 profile 的依赖树，适合验证真实安装形态。独立项目使用本地 `link` 时，必须先在本项目执行 `pnpm install`，否则外部链接路径无法解析 DSH 的 peer 依赖。
 
 ## 开发
 
