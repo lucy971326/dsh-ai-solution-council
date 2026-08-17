@@ -6,7 +6,7 @@
  * injection locally instead of importing the main repository's build config.
  */
 import { readFile } from 'node:fs/promises'
-import { basename, dirname, relative, resolve as resolvePath, sep } from 'node:path'
+import { basename, dirname, resolve as resolvePath } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { UserConfig } from 'tsdown'
 import { transform } from 'lightningcss'
@@ -31,13 +31,8 @@ const CLIENT_EXTERNALS = [...PLATFORM_MODULES, '@deepseek-ai/dsh-client-runtime/
 const INLINE_SAFE = /^@deepseek-ai\/dsh-(host-apiproxy|session|llm|tools|brand)(\/|$)/
 const VENDORED_LIBRARY = /^@deepseek-ai\/(cosmokit|schemastery)(\/|$)/
 const GENERATED_REMOTE = /^@deepseek-ai\/dsh-[a-z0-9]+(?:-[a-z0-9]+)*\/remote$/
-const REPOSITORY_ROOT = resolvePath(dirname(fileURLToPath(import.meta.url)), '..', 'deepseek-harness')
-
-function browserSourcePath(source: string, sourcemapPath: string): string {
-  if (!source.startsWith('.')) return source
-  const physicalSource = resolvePath(dirname(sourcemapPath), source)
-  const repositoryPath = relative(REPOSITORY_ROOT, physicalSource).split(sep).join('/')
-  return repositoryPath.startsWith('packages/') ? `../../../${repositoryPath}` : source
+function browserSourcePath(source: string): string {
+  return source
 }
 
 function nodeConfig(id: string, entries: readonly string[]): UserConfig {

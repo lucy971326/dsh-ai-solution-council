@@ -43,7 +43,7 @@
   },
   "scripts": {
     "build": "tsdown",
-    "prepare": "pnpm build",
+    "prepublishOnly": "pnpm build",
     "test": "vitest run --config vitest.config.ts"
   },
   "files": [
@@ -91,6 +91,7 @@
     "@deepseek-ai/dsh-tools": "0.1.0-rc.6",
     "@deepseek-ai/dsh-typert-protocol": "0.1.0-rc.6",
     "@testing-library/react": "^16.3.2",
+    "@types/node": "^22.20.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "jsdom": "^29.1.1",

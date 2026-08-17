@@ -49,14 +49,7 @@
 dsh plugin --profile web add github:lucy971326/dsh-ai-solution-council
 ```
 
-GitHub 安装会执行包的 `prepare` 脚本生成 `lib/`。如果 pnpm 拒绝执行构建脚本，请按终端提示在目标 profile 的 `pnpm-workspace.yaml` 中授权：
-
-```yaml
-allowBuilds:
-  dsh-ai-solution-council: true
-```
-
-生产使用建议固定 Git commit，避免远端后续变更影响已安装版本。
+仓库会提交可直接运行的 `lib/` 构建产物，因此安装者不需要执行构建脚本，也不需要修改 profile 的 `pnpm-workspace.yaml`。生产使用建议固定 Git commit，避免远端后续变更影响已安装版本。
 
 ### 从 tarball 安装
 
@@ -143,6 +136,7 @@ src/
 ```
 
 构建产物位于 `lib/`。独立包发布或从 GitHub 安装时必须包含构建产物，不能只提交 `src/`。
+发布到 npm 时由作者侧的 `prepublishOnly` 构建；消费者安装已构建的包，不执行插件构建脚本。
 
 ## 已知边界
 
