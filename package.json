@@ -1,6 +1,6 @@
 {
   "name": "dsh-ai-solution-council",
-  "version": "0.1.0",
+  "version": "0.1.4",
   "description": "Independent DSH plugin for isolated parallel codebase exploration and serial solution review",
   "license": "MIT",
   "repository": {
@@ -23,14 +23,6 @@
       "types": "./lib/types/client/index.d.ts",
       "default": "./lib/client.js"
     },
-    "./remote": {
-      "types": "./lib/types/remote.d.ts",
-      "default": "./lib/remote.js"
-    },
-    "./typert": {
-      "types": "./lib/types/remote-service.d.ts",
-      "default": "./lib/remote-service.js"
-    },
     "./package.json": "./package.json"
   },
   "dsh": {
@@ -41,11 +33,8 @@
       "platform": "web",
       "inject": [
         "@deepseek-ai/dsh-client-runtime",
-        "@deepseek-ai/dsh-api-remotes",
         "@deepseek-ai/dsh-client-locale",
         "@deepseek-ai/dsh-client-ui-conversation",
-        "@deepseek-ai/dsh-client-ui-layout",
-        "@deepseek-ai/dsh-client-ui-tool",
         "@deepseek-ai/dsh-client-ui-primitives"
       ]
     }
@@ -68,37 +57,29 @@
   "peerDependencies": {
     "@deepseek-ai/cordis": "*",
     "@deepseek-ai/dsh-agent": "*",
-    "@deepseek-ai/dsh-api-remotes": "*",
     "@deepseek-ai/dsh-client-locale": "*",
     "@deepseek-ai/dsh-client-runtime": "*",
     "@deepseek-ai/dsh-client-ui-conversation": "*",
-    "@deepseek-ai/dsh-client-ui-layout": "*",
     "@deepseek-ai/dsh-client-ui-primitives": "*",
     "@deepseek-ai/dsh-client-ui-slots": "*",
-    "@deepseek-ai/dsh-client-ui-tool": "*",
     "@deepseek-ai/dsh-session": "*",
     "@deepseek-ai/dsh-storage-domain": "*",
     "@deepseek-ai/dsh-subagent": "*",
     "@deepseek-ai/dsh-tools": "*",
-    "@deepseek-ai/dsh-typert-protocol": "*",
     "react": "^18.2.0"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.1",
     "@deepseek-ai/dsh-agent": "0.1.0-rc.6",
-    "@deepseek-ai/dsh-api-remotes": "0.1.0-rc.6",
     "@deepseek-ai/dsh-client-locale": "0.1.0-rc.6",
     "@deepseek-ai/dsh-client-runtime": "0.1.0-rc.6",
     "@deepseek-ai/dsh-client-ui-conversation": "0.1.0-rc.6",
-    "@deepseek-ai/dsh-client-ui-layout": "0.1.0-rc.6",
     "@deepseek-ai/dsh-client-ui-primitives": "0.1.0-rc.6",
     "@deepseek-ai/dsh-client-ui-slots": "0.1.0-rc.6",
-    "@deepseek-ai/dsh-client-ui-tool": "0.1.0-rc.6",
     "@deepseek-ai/dsh-session": "0.1.0-rc.6",
     "@deepseek-ai/dsh-storage-domain": "0.1.0-rc.6",
     "@deepseek-ai/dsh-subagent": "0.1.0-rc.6",
     "@deepseek-ai/dsh-tools": "0.1.0-rc.6",
-    "@deepseek-ai/dsh-typert-protocol": "0.1.0-rc.6",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^22.20.0",
     "@types/react": "^18.3.0",

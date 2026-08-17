@@ -124,11 +124,7 @@ export default ({ env }: { env?: Record<string, unknown> }): UserConfig[] => {
   if (face !== undefined && face !== 'host' && face !== 'client') {
     throw new Error(`invalid DSH_BUILD_FACE: ${String(face)}`)
   }
-  const host = nodeConfig('dsh-ai-solution-council', [
-    'src/index.ts',
-    'src/remote.ts',
-    'src/remote-service.ts',
-  ])
+  const host = nodeConfig('dsh-ai-solution-council', ['src/index.ts'])
   const client = clientConfig('dsh-ai-solution-council')
   if (face === 'host') return [host]
   if (face === 'client') return [client]

@@ -23,5 +23,4 @@ export declare class SolutionCouncilService {
   runCouncil(agent: Agent, task: string, callId: string, signal: AbortSignal): Promise<CouncilToolResult>
 }
 
-export { SolutionCouncilRemoteService } from './remote-service.js'
-export { default } from './remote-service.js'
+export default SolutionCouncilService

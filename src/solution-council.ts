@@ -9,10 +9,11 @@ import type { Agent } from '@deepseek-ai/dsh-agent'
 import { defineDomain, domainTable } from '@deepseek-ai/dsh-storage-domain'
 import type { Domain, KvTable } from '@deepseek-ai/dsh-storage-domain'
 import type { SessionHeader, SessionId } from '@deepseek-ai/dsh-session/types'
-import { defineTool, type ObjectJsonSchema } from '@deepseek-ai/dsh-tools'
-import { TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
+import { defineTool } from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-subagent'
+import type { CouncilRunStartData, CouncilRunUpdateData } from './council-events.ts'
 import type {
+  CouncilCancelResult,
   CouncilExplorer,
   CouncilFinalDecision,
   CouncilGetResult,
@@ -112,31 +113,8 @@ const EXPLORER_PROFILES = [
   { id: 'A4', label: '独立调查 4' },
 ] as const
 
-/** The orchestrator must never be available inside one of its own children. */
-const COUNCIL_TOOL_NAME = 'solution_council'
-
-const REPORT_OUTPUT_SCHEMA = {
-  type: 'object',
-  additionalProperties: false,
-  properties: {
-    summary: { type: 'string' },
-    evidence: { type: 'array', items: { type: 'string' } },
-    concerns: { type: 'array', items: { type: 'string' } },
-    recommendation: { type: 'string' },
-  },
-  required: ['summary', 'evidence', 'concerns'],
-} as const satisfies ObjectJsonSchema
-
-const FINAL_OUTPUT_SCHEMA = {
-  type: 'object',
-  additionalProperties: false,
-  properties: {
-    recommendation: { type: 'string' },
-    rationale: { type: 'string' },
-    unresolvedConcerns: { type: 'array', items: { type: 'string' } },
-  },
-  required: ['recommendation', 'rationale', 'unresolvedConcerns'],
-} as const satisfies ObjectJsonSchema
+/** Every child runs single-layer: never spawn more subagents, never recurse. */
+const NO_SUBAGENT_RULE = '\n约束：你不得创建、启动或调用任何子 Agent / 子代理工具，也不得再次调用方案团工具。你只能使用当前 Agent 模式已经提供给你的只读工具独立完成任务，保持单层执行，禁止任何形式的递归。'
 
 function formatTime(): string {
   return new Date().toISOString().replace('T', ' ').replace(/\.\d{3}Z$/, ' UTC')
@@ -268,7 +246,7 @@ function requireAgent(exec: { agent?: Agent }): Agent {
  * Shared council service. The model Tool, Remote API, and Web workbench all
  * read the same independent storage sidecar through this class.
  */
-export class SolutionCouncilService extends TypertRemoteService {
+export class SolutionCouncilService extends Service {
   static inject = inject
   static Config = Config
 
@@ -324,7 +302,7 @@ export class SolutionCouncilService extends TypertRemoteService {
     })
   }
 
-  cancel(agent: Agent, callId: string): Promise<{ runId: string; cancelled: boolean }> {
+  cancel(agent: Agent, callId: string): Promise<CouncilCancelResult> {
     return this.getByCall(agent, callId).then(({ run }) => {
       if (run === null || run.status !== 'running') return { runId: run?.runId ?? '', cancelled: false }
       this.activeControllers.get(run.runId)?.abort()
@@ -382,7 +360,7 @@ export class SolutionCouncilService extends TypertRemoteService {
       const review = await this.runReportAgent(
         agent,
         '交叉评审',
-        `你是方案团的串行交叉评审者。你必须保持独立上下文，只审查下面几份同职责调查报告，指出共识、分歧、证据强弱与遗漏。必要时可以用只读工具回到代码库核验。不要复述思维过程，只输出结构化报告。\n\n任务：${run.task}\n调查报告：${compact(reports)}`,
+        `你是方案团的串行交叉评审者。你必须保持独立上下文，只审查下面几份同职责探索方案，指出共识、分歧、证据强弱与遗漏。必要时可以用只读工具回到代码库核验。不要复述思维过程，直接把你的评审结论以纯文本输出，不要输出 JSON、不要使用任何结构化标记。\n\n任务：${run.task}\n探索方案：${compact(reports)}`,
         controller.signal,
       )
       run = await this.updateRun(agent, run.runId, current => ({ ...current, review }))
@@ -391,7 +369,7 @@ export class SolutionCouncilService extends TypertRemoteService {
       const verification = await this.runReportAgent(
         agent,
         '证据核验',
-        `你是方案团的串行证据核验者。根据任务、调查报告和交叉评审，逐项检查关键结论是否有代码证据，标出不能确认的地方和风险。你可以使用只读工具核验代码。只输出结构化报告。\n\n任务：${run.task}\n调查报告：${compact(reports)}\n交叉评审：${compact(review)}`,
+        `你是方案团的串行证据核验者。根据任务、探索方案和交叉评审，逐项检查关键结论是否有代码证据，标出不能确认的地方和风险。你可以使用只读工具核验代码。直接把你的核验结论以纯文本输出，不要输出 JSON、不要使用任何结构化标记。\n\n任务：${run.task}\n探索方案：${compact(reports)}\n交叉评审：${compact(review)}`,
         controller.signal,
       )
       run = await this.updateRun(agent, run.runId, current => ({ ...current, verification }))
@@ -399,7 +377,7 @@ export class SolutionCouncilService extends TypertRemoteService {
       run = await this.updateRun(agent, run.runId, current => ({ ...current, stage: 'synthesizing' }))
       const final = await this.runFinalAgent(
         agent,
-        `你是主 AI 的串行最终裁判。综合同职责调查、交叉评审和证据核验，给出一个可执行的最终方案。必须明确：建议做什么、为什么、未解决的风险是什么。不要把多数票当成真相；证据质量优先。只输出结构化最终决定。\n\n任务：${run.task}\n调查报告：${compact(reports)}\n交叉评审：${compact(review)}\n证据核验：${compact(verification)}`,
+        `你是主 AI 的串行最终裁判。综合同职责探索方案、交叉评审和证据核验，给出一个可执行的最终方案。必须明确：建议做什么、为什么、未解决的风险是什么。不要把多数票当成真相；证据质量优先。直接把你的最终结论以纯文本输出，不要输出 JSON、不要使用任何结构化标记。\n\n任务：${run.task}\n探索方案：${compact(reports)}\n交叉评审：${compact(review)}\n证据核验：${compact(verification)}`,
         controller.signal,
       )
       return await this.updateRun(agent, run.runId, current => ({
@@ -430,8 +408,8 @@ export class SolutionCouncilService extends TypertRemoteService {
 
   private async runExplorer(agent: Agent, task: string, id: string, label: string, signal: AbortSignal): Promise<CouncilExplorer> {
     try {
-      const child = await this.startChild(agent, label, `你是一个独立的代码库调查员。你和其他调查员职责相同，但上下文完全隔离。请围绕下面任务自行探索代码库，使用当前 Agent 模式提供的代码库工具取得证据。遵守当前模式的工具边界；不要猜测，不要修改文件，不要讨论其他调查员。最后只返回结构化调查报告。\n\n任务：${task}` , signal, REPORT_OUTPUT_SCHEMA)
-      const report = reportFromChild(child.result, `${label} 未返回有效调查报告。`)
+      const child = await this.startChild(agent, label, `你是一个方案团的并行独立探索者。你和其他探索者职责相同，但上下文完全隔离，必须各自独立产出一份可执行的方案。请围绕任务自行探索代码库，用当前 Agent 模式提供的代码库工具取证，验证你的方案是否可行。不要猜测、不要修改文件、不要讨论其他探索者。最后把你的方案直接以纯文本输出，不要输出 JSON、不要使用任何结构化标记。\n\n任务：${task}`, signal)
+      const report = reportFromChild(child.result, `${label} 未返回有效方案。`)
       return {
         id,
         label,
@@ -456,7 +434,7 @@ export class SolutionCouncilService extends TypertRemoteService {
 
   private async runReportAgent(agent: Agent, label: string, prompt: string, signal: AbortSignal): Promise<CouncilReport> {
     try {
-      const child = await this.startChild(agent, label, prompt, signal, REPORT_OUTPUT_SCHEMA)
+      const child = await this.startChild(agent, label, prompt, signal)
       return reportFromChild(child.result, `${label} 未返回有效报告。`)
     } catch (cause) {
       return { summary: `${label}失败：${cause instanceof Error ? cause.message : String(cause)}`, evidence: [], concerns: ['该阶段未完成，结论需要人工复核。'] }
@@ -465,7 +443,7 @@ export class SolutionCouncilService extends TypertRemoteService {
 
   private async runFinalAgent(agent: Agent, prompt: string, signal: AbortSignal): Promise<CouncilFinalDecision> {
     try {
-      const child = await this.startChild(agent, '最终裁判', prompt, signal, FINAL_OUTPUT_SCHEMA)
+      const child = await this.startChild(agent, '最终裁判', prompt, signal)
       return finalFromUnknown(child.result.structured, outputText(child.result.output) || '未形成最终建议。')
     } catch (cause) {
       return {
@@ -481,20 +459,12 @@ export class SolutionCouncilService extends TypertRemoteService {
     label: string,
     prompt: string,
     signal: AbortSignal,
-    outputSchema: ObjectJsonSchema,
   ): Promise<{ result: { structured?: unknown; output: { type: string; text?: string }[]; stopReason: string }; childSessionId: string }> {
     const child = await this.ctx.subagents.start(this.providerName, {
       label,
       parent,
       signal,
-      prompt: [{ type: 'text', text: prompt }],
-      outputSchema,
-      // spawn creates the child under the parent's current Agent preset.
-      // Keep that mode's complete tool set, but remove this orchestrator itself.
-      // Without this one deny rule a child can call solution_council again and
-      // recursively create four more children, leaving the parent run waiting
-      // forever on Promise.all.
-      toolFilter: { deny: [COUNCIL_TOOL_NAME] },
+      prompt: [{ type: 'text', text: prompt + NO_SUBAGENT_RULE }],
     })
     try {
       const result = await child.result
@@ -523,6 +493,17 @@ export class SolutionCouncilService extends TypertRemoteService {
       }
       const runs = [...(row?.runs ?? []), run].slice(-this.maxRunsPerSession)
       await this.requireTable().put(session.header.id, { session: sessionIdentity(session.header), runs })
+      try {
+        agent.session.append('council/run-start', {
+          runId: run.runId,
+          callId: run.callId,
+          task: run.task,
+          explorers: profiles.map(profile => ({ id: profile.id, label: profile.label })),
+          createdAt: run.createdAt,
+        } satisfies CouncilRunStartData)
+      } catch (cause) {
+        console.warn('[solution-council] append run-start failed', cause)
+      }
       return copyRun(run)
     })
   }
@@ -536,6 +517,20 @@ export class SolutionCouncilService extends TypertRemoteService {
       const next = copyRun({ ...update(copyRun(current)), updatedAt: formatTime() })
       const runs = row!.runs.map((item: CouncilRun) => item.runId === runId ? next : item)
       await this.requireTable().put(session.header.id, { session: sessionIdentity(session.header), runs })
+      try {
+        agent.session.append('council/run-update', {
+          runId: next.runId,
+          status: next.status,
+          stage: next.stage,
+          explorers: next.explorers,
+          ...(next.review === undefined ? {} : { review: next.review }),
+          ...(next.verification === undefined ? {} : { verification: next.verification }),
+          ...(next.final === undefined ? {} : { final: next.final }),
+          updatedAt: next.updatedAt,
+        } satisfies CouncilRunUpdateData)
+      } catch (cause) {
+        console.warn('[solution-council] append run-update failed', cause)
+      }
       return next
     })
   }

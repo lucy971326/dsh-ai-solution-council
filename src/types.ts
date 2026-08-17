@@ -5,61 +5,61 @@ export type CouncilStatus = 'queued' | 'running' | 'completed' | 'failed' | 'can
 export type ExplorerStatus = 'queued' | 'running' | 'completed' | 'failed'
 
 export interface CouncilExplorer {
-  readonly id: string
-  readonly label: string
-  readonly status: ExplorerStatus
-  readonly summary?: string
-  readonly evidence: readonly string[]
-  readonly concerns: readonly string[]
-  readonly childSessionId?: string
-  readonly error?: string
+  id: string
+  label: string
+  status: ExplorerStatus
+  summary?: string
+  evidence: string[]
+  concerns: string[]
+  childSessionId?: string
+  error?: string
 }
 
 export interface CouncilReport {
-  readonly summary: string
-  readonly evidence: readonly string[]
-  readonly concerns: readonly string[]
-  readonly recommendation?: string
+  summary: string
+  evidence: string[]
+  concerns: string[]
+  recommendation?: string
 }
 
 export interface CouncilFinalDecision {
-  readonly recommendation: string
-  readonly rationale: string
-  readonly unresolvedConcerns: readonly string[]
+  recommendation: string
+  rationale: string
+  unresolvedConcerns: string[]
 }
 
 export interface CouncilRun {
-  readonly runId: string
-  readonly callId: string
-  readonly sessionId: string
-  readonly task: string
-  readonly status: CouncilStatus
-  readonly stage: CouncilStage
-  readonly explorers: readonly CouncilExplorer[]
-  readonly review?: CouncilReport
-  readonly verification?: CouncilReport
-  readonly final?: CouncilFinalDecision
-  readonly createdAt: string
-  readonly updatedAt: string
+  runId: string
+  callId: string
+  sessionId: string
+  task: string
+  status: CouncilStatus
+  stage: CouncilStage
+  explorers: CouncilExplorer[]
+  review?: CouncilReport
+  verification?: CouncilReport
+  final?: CouncilFinalDecision
+  createdAt: string
+  updatedAt: string
 }
 
 export interface CouncilListResult {
-  readonly runs: readonly CouncilRun[]
+  runs: CouncilRun[]
 }
 
 export interface CouncilGetResult {
-  readonly run: CouncilRun | null
+  run: CouncilRun | null
 }
 
 export interface CouncilCancelResult {
-  readonly runId: string
-  readonly cancelled: boolean
+  runId: string
+  cancelled: boolean
 }
 
 export interface CouncilToolResult {
-  readonly runId: string
-  readonly status: CouncilStatus
-  readonly task: string
-  readonly recommendation: string
-  readonly explorerCount: number
+  runId: string
+  status: CouncilStatus
+  task: string
+  recommendation: string
+  explorerCount: number
 }

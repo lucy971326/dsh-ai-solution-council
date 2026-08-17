@@ -1,7 +1,11 @@
 node_modules/
+.npmrc
 coverage/
 .vite/
 .vite-temp/
 *.log
 lib/**/*.map
 lib/**/*.tsbuildinfo
+
+.typert/
+*.tgz
