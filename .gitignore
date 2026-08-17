@@ -1,0 +1,7 @@
+node_modules/
+coverage/
+.vite/
+.vite-temp/
+*.log
+lib/**/*.map
+lib/**/*.tsbuildinfo

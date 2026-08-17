@@ -1,0 +1,6 @@
+- insert:
+    - id: solution-council
+      name: 'file:///C:/Users/Administrator/Desktop/Learn/dsh-ai-solution-council/src/index.ts'
+      config:
+        explorerCount: 4
+        providerName: spawn

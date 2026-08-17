@@ -1,0 +1,11 @@
+{
+  "extends": "../deepseek-harness/tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "lib/types",
+    "jsx": "react-jsx"
+  },
+  "include": [
+    "src"
+  ]
+}

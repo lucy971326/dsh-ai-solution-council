@@ -1,0 +1,6 @@
+- insert:
+    - id: solution-council
+      name: dsh-ai-solution-council
+      config:
+        explorerCount: 4
+        providerName: spawn
