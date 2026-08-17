@@ -43,13 +43,30 @@
 
 ## 安装
 
-### 从 GitHub 安装
+### 从 npm 安装（推荐）
+
+npm 包已经包含构建产物，安装者不需要构建，也不需要修改 profile 的
+`pnpm-workspace.yaml`：
+
+```powershell
+dsh plugin --profile web add dsh-ai-solution-council
+```
+
+### 从 GitHub 源码安装（开发用）
 
 ```powershell
 dsh plugin --profile web add github:lucy971326/dsh-ai-solution-council
 ```
 
-仓库会提交可直接运行的 `lib/` 构建产物，因此安装者不需要执行构建脚本，也不需要修改 profile 的 `pnpm-workspace.yaml`。生产使用建议固定 Git commit，避免远端后续变更影响已安装版本。
+GitHub 依赖按源码包处理，会执行包的 `prepare` 构建脚本。pnpm 会要求在 profile 的
+`pnpm-workspace.yaml` 中显式允许本包构建：
+
+```yaml
+allowBuilds:
+  dsh-ai-solution-council: true
+```
+
+这是 pnpm 对 GitHub 源码依赖的安全授权，不是插件运行所需的配置。生产使用应优先使用 npm 包；开发时也可以固定 Git commit。
 
 ### 从 tarball 安装
 
@@ -136,7 +153,7 @@ src/
 ```
 
 构建产物位于 `lib/`。独立包发布或从 GitHub 安装时必须包含构建产物，不能只提交 `src/`。
-发布到 npm 时由作者侧的 `prepublishOnly` 构建；消费者安装已构建的包，不执行插件构建脚本。
+发布到 npm 时由作者侧的 `prepare` 构建；消费者从 npm 安装已构建的包，不执行插件构建脚本。
 
 ## 已知边界
 

@@ -2,6 +2,15 @@
   "name": "dsh-ai-solution-council",
   "version": "0.1.0",
   "description": "Independent DSH plugin for isolated parallel codebase exploration and serial solution review",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lucy971326/dsh-ai-solution-council.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lucy971326/dsh-ai-solution-council/issues"
+  },
+  "homepage": "https://github.com/lucy971326/dsh-ai-solution-council#readme",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
@@ -43,7 +52,7 @@
   },
   "scripts": {
     "build": "tsdown",
-    "prepublishOnly": "pnpm build",
+    "prepare": "pnpm build",
     "test": "vitest run --config vitest.config.ts"
   },
   "files": [
